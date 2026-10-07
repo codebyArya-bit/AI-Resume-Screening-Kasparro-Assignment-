@@ -3,6 +3,7 @@ import collections
 import hashlib
 import json
 import re
+import secrets
 from pathlib import Path
 from .ingest import extract, github_profiles
 from .scoring import screen
@@ -84,7 +85,77 @@ def public_summary(summary, rows):
     return dict(summary,score_distribution=dict(count=len(scores),minimum=min(scores) if scores else None,
                                                 maximum=max(scores) if scores else None,
                                                 mean=round(sum(scores)/len(scores),2) if scores else None),
-                privacy='Aggregate only. No candidate identities, URLs, evidence quotations or per-candidate ranking.')
+                privacy='Public candidate results use random IDs and omit names, contacts, filenames, profile identifiers, URLs and evidence quotations.')
+
+
+def public_results(rows):
+    """Return assignment-complete candidate rows without direct identifiers or quotes."""
+    public, used_ids = [], set()
+    for row in rows:
+        while True:
+            public_id = 'applicant_' + secrets.token_hex(4)
+            if public_id not in used_ids:
+                used_ids.add(public_id)
+                break
+        evidence = [
+            {key: item[key] for key in ('category','rule','points') if key in item}
+            for item in row.get('evidence',[])
+        ]
+        penalties = [
+            {key: item[key] for key in ('rule','points') if key in item}
+            for item in row.get('penalties',[])
+        ]
+        evidence_rules = sorted({item.get('rule','').replace('_',' ') for item in evidence if item.get('rule')})
+        status = row.get('github_enrichment',{}).get('status','not_attempted')
+        github_points = (row.get('score_breakdown') or {}).get('github',0)
+        public.append({
+            'candidate_id':public_id,
+            'rank':row.get('rank'),
+            'parse_status':row.get('parse_status'),
+            'eligible':row.get('eligible'),
+            'rejection_reasons':row.get('rejection_reasons',[]),
+            'matched_skills':row.get('matched_skills',[]),
+            'score_breakdown':row.get('score_breakdown'),
+            'penalties':penalties,
+            'penalty_points':row.get('penalty_points',0),
+            'total_score':row.get('total_score'),
+            'evidence':evidence,
+            'project_summary':('Evidence recorded for: ' + ', '.join(evidence_rules) + '.') if evidence_rules else 'No scored project evidence.',
+            'github_status':status,
+            'github_summary':f'{status.replace("_"," ").title()}; awarded {github_points}/10 GitHub points.',
+            'score_interval':row.get('score_interval'),
+            'shortlist_eligible':row.get('shortlist_eligible',False),
+            'is_duplicate':bool(row.get('duplicate_of')),
+        })
+    return public
+
+
+def validate_public_results(rows):
+    required = {'candidate_id','rank','parse_status','eligible','rejection_reasons','matched_skills',
+                'score_breakdown','penalty_points','total_score','evidence','project_summary',
+                'github_status','github_summary','score_interval','shortlist_eligible','is_duplicate'}
+    forbidden = {'candidate_name','duplicate_of','github_profile_candidates','github_enrichment',
+                 'llm_annotation','quote','start','end','sources'}
+    def keys(value):
+        if isinstance(value,dict):
+            return set(value).union(*(keys(item) for item in value.values()))
+        if isinstance(value,list):
+            return set().union(*(keys(item) for item in value)) if value else set()
+        return set()
+    assert rows and len({row['candidate_id'] for row in rows}) == len(rows)
+    assert all(re.fullmatch(r'applicant_[0-9a-f]{8}',row['candidate_id']) for row in rows)
+    assert all(required <= row.keys() for row in rows)
+    assert not forbidden.intersection(keys(rows))
+    for row in rows:
+        if row['eligible']:
+            assert row['total_score'] == max(0,sum(row['score_breakdown'].values())-row['penalty_points'])
+        else:
+            assert row['rank'] is None and row['rejection_reasons']
+    ranked = [row for row in rows if row['rank'] is not None]
+    assert [row['rank'] for row in ranked] == list(range(1,len(ranked)+1))
+    assert [row['total_score'] for row in ranked] == sorted((row['total_score'] for row in ranked),reverse=True)
+    return {'status':'passed','records':len(rows),'ranked':len(ranked),
+            'privacy':'direct identifiers, URLs and evidence quotes absent'}
 
 
 def write_json(path, data):

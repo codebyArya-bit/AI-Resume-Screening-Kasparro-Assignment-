@@ -1,7 +1,9 @@
 {
   "status": "passed",
-  "public_files_checked": 22,
+  "public_files_checked": 27,
   "candidate_emails_checked": 49,
-  "candidate_profile_urls_checked": 120,
-  "candidate_level_outputs_excluded": true
+  "candidate_profile_urls_checked": 259,
+  "private_candidate_ids_checked": 50,
+  "candidate_level_output_mode": "privacy-safe public rows",
+  "direct_identifier_leaks": 0
 }

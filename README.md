@@ -15,9 +15,11 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate
 # macOS/Linux: source .venv/bin/activate
 python -m pip install -r requirements.txt
-python main.py --input ./resumes --output ./output/results.json
+python main.py --input ./resumes --output ./private/batch/results.json
+python tools/export_public_results.py private/batch/results.json output/results.json
 python -m unittest discover -s tests -v
-python tools/validate_batch.py output
+python tools/validate_batch.py private/batch
+python tools/validate_public.py output/results.json
 ```
 
 No API key is required. The default run makes bounded, sequential requests to the public GitHub API. Set `GITHUB_TOKEN` in your environment to improve the rate limit. `.env.example` documents optional variables; environment files are not loaded automatically.
@@ -26,7 +28,8 @@ No API key is required. The default run makes bounded, sequential requests to th
 # Offline demonstration uses explicitly synthetic resumes.
 python main.py --input examples/resumes --output private/demo/results.json --offline
 # Fixed-date run with private snapshot cache:
-python main.py --input private/resumes --output output/results.json --as-of 2026-10-07 --cache output/github_cache.json
+python main.py --input private/resumes --output private/batch/results.json --as-of 2026-10-07 --cache private/batch/github_cache.json
+python tools/export_public_results.py private/batch/results.json output/results.json
 # Optional semantic annotation; explicit opt-in sends resume text to a provider:
 python main.py --input resumes --output output/results.json --llm
 ```
@@ -35,11 +38,11 @@ The LLM adapter accepts an HTTPS, OpenAI-compatible chat-completions endpoint co
 
 ## Outputs and privacy
 
-`results.json` is an array of all candidates, with eligible candidates ranked first and descending by awarded score. Stable candidate IDs break ties. Rejected and failed inputs have null ranks. Names in results are pseudonyms, deliberately avoiding unreliable automatic identity assignment. The private audit includes a clearly unverified first-line name guess, extracted emails, original relative filenames, page text, embedded links, text/hash provenance and warnings.
+Private `results.json` contains complete evidence for authorized review. Public `output/results.json` contains all 50 candidates with random applicant IDs, ranks, eligibility, rejection reasons, matched skills, score breakdowns, generic evidence rules, project summaries and GitHub status. It omits names, emails, filenames, profile identifiers, URLs and exact resume quotations.
 
 Every resume score evidence record has an exact quote plus start/end offsets into the normalized text in `audit.json`. Those offsets are **text positions, not PDF coordinates**. GitHub points trace to separate retrieved public events/repository snapshots and source URLs. Penalties are separate from the five category scores: `total_score = max(0, sum(score_breakdown) - penalty_points)`.
 
-`batch_summary.json` and `validation.json` are safe aggregate exports. `results.json`, `audit.json`, `manual_review.json`, caches and all dataset files are private and Git-ignored. Pseudonyms alone do not anonymize unique project quotations or GitHub URLs. The public ZIP excludes all candidate-level data. The private submission ZIP includes results and audit evidence but no original PDFs. Share it only with authorized assignment reviewers.
+`batch_summary.json`, `validation.json`, `privacy_check.json` and privacy-safe `results.json` are public exports. Full results, `audit.json`, `manual_review.json`, caches and all dataset files remain private and Git-ignored. Pseudonyms alone do not anonymize unique project quotations or GitHub URLs, so public results exclude both. Private submission ZIP includes full results and audit evidence but no original PDFs. Share it only with authorized assignment reviewers.
 
 ## Design Decisions
 
@@ -71,7 +74,7 @@ Unavailable, missing or ambiguous GitHub merit is `null`. Its **awarded bonus** 
 
 The supplied ZIP contains 50 PDFs and no README, sample submission, trusted labels or gold ranking. The DOCX brief and supplied SKILL.md were read; the skill concerns brainstorming process, not candidate scoring. The user's instruction to continue the already approved design took precedence over additional routine approval gates.
 
-See `output/batch_summary.json`, `output/validation.json` and the PDF report for final measured counts. Automated checks independently verify output schema, category caps, arithmetic, ordering, ranks, duplicate exclusion, every exact evidence span and positive GitHub provenance. Twenty-five unit/integration tests cover the hard filter, mixed skills, misleading skill claims, unusual headings, custom ML, project boundaries, penalties, malformed PDFs, embedded URLs, duplicates, blank pages, GitHub failures/cache, LLM invalid evidence/timeouts and privacy exports.
+See `output/batch_summary.json`, `output/validation.json` and the PDF report for final measured counts. Automated checks independently verify output schema, category caps, arithmetic, ordering, ranks, duplicate exclusion, every exact evidence span and positive GitHub provenance. Twenty-seven unit/integration tests cover the hard filter, mixed skills, misleading skill claims, unusual headings, custom ML, project boundaries, penalties, malformed PDFs, embedded URLs, duplicates, blank pages, GitHub failures/cache, LLM invalid evidence/timeouts and privacy exports.
 
 All 50 extracted resumes were inspected for Python/AI evidence and extraction problems. A documented manual spot-check of 15 selected cases covers rejected profiles, mixed stacks, unusual prose, ML equivalents, multi-column text, blank pages, ambiguous links and detailed agentic projects. This is a single agent's review, not independent gold labeling, a random sample, or measured accuracy. Candidate-level review notes stay private. No ranking accuracy percentage is asserted.
 
@@ -79,7 +82,7 @@ All 50 extracted resumes were inspected for Python/AI evidence and extraction pr
 
 Submission repository: [AI Resume Screening Kasparro Assignment](https://github.com/codebyArya-bit/AI-Resume-Screening-Kasparro-Assignment-).
 
-The public submission contains code, dependencies, synthetic examples, tests, aggregate validation outputs and the PDF report. Full results for the supplied 50 resumes and their audit evidence are delivered separately in the private submission ZIP to authorized reviewers. Raw resumes, contact details, unique evidence quotes and private caches must never be committed.
+The public submission contains code, dependencies, synthetic examples, tests, aggregate validation outputs, privacy-safe results for all 50 candidates and the PDF report. Full evidence is delivered separately in the private submission ZIP to authorized reviewers. Raw resumes, contact details, filenames, profile identifiers, URLs, unique evidence quotes and private caches must never be committed.
 
 Review `git ls-files` before pushing. Never force-add ignored candidate outputs.
 

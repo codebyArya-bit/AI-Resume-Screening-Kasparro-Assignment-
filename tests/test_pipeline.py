@@ -174,11 +174,49 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(llm.validate_annotation({'project_summary':'x','evidence':['invented']}, 'Python')['status'], 'invalid')
         self.assertEqual(llm.validate_annotation({'project_summary':'x','evidence':['Python']}, 'Python')['status'], 'verified')
 
-    def test_public_export_contains_no_candidate_rows(self):
+    def test_public_export_keeps_required_fields_and_removes_identifiers(self):
         batch = self.module('src.batch')
-        public = batch.public_summary({'total_resumes':1,'successfully_parsed':1,'eligible':1,'rejected':0,'failed_unreadable':0,'duplicates':0}, [])
-        self.assertNotIn('candidate_name', json.dumps(public))
-        self.assertNotIn('email', json.dumps(public))
+        private = [{
+            'candidate_id':'candidate_001', 'candidate_name':'Asha Rao', 'rank':1,
+            'parse_status':'parsed', 'duplicate_of':None, 'eligible':True,
+            'rejection_reasons':[], 'matched_skills':['Python','RAG'],
+            'score_breakdown':{'ai_project_depth':20,'python_backend':10,'cloud_fullstack':0,'github':0,'engineering_depth':0},
+            'penalties':[{'rule':'thin_wrapper','points':5,'quote':'Built at Secret College'}],
+            'penalty_points':5, 'total_score':25,
+            'evidence':[{'category':'ai_project_depth','rule':'retrieval','points':6,'quote':'Secret project for Acme','start':10,'end':33}],
+            'project_summary':'Secret project for Acme', 'strengths':['Secret College winner'],
+            'concerns':['Contact asha@example.com'],
+            'github_profile_candidates':['asha-private'],
+            'github_enrichment':{'status':'verified','summary':'1 recent engineering event; 1 maintained repositories; 1 relevant repositories.','sources':['https://github.com/asha-private']},
+            'github_summary':'1 recent engineering event; 1 maintained repositories; 1 relevant repositories.',
+            'score_interval':[25,25], 'llm_annotation':{'status':'disabled'},
+            'shortlist_eligible':True,
+        }]
+        with patch('secrets.token_hex', return_value='a1b2c3d4'):
+            public = batch.public_results(private)
+        self.assertEqual(public[0]['candidate_id'], 'applicant_a1b2c3d4')
+        self.assertEqual(public[0]['rank'], 1)
+        self.assertEqual(public[0]['score_breakdown']['ai_project_depth'], 20)
+        self.assertEqual(public[0]['evidence'], [{'category':'ai_project_depth','rule':'retrieval','points':6}])
+        exported = json.dumps(public)
+        for secret in ('Asha Rao','candidate_001','Secret','Acme','asha@example.com','asha-private','github.com'):
+            self.assertNotIn(secret, exported)
+
+    def test_public_export_assigns_unique_ids(self):
+        batch = self.module('src.batch')
+        rows = [dict(rank=1), dict(rank=2)]
+        with patch('secrets.token_hex', side_effect=['11111111','11111111','22222222']):
+            public = batch.public_results(rows)
+        self.assertEqual([r['candidate_id'] for r in public], ['applicant_11111111','applicant_22222222'])
+
+    def test_public_validation_rejects_identifier_fields(self):
+        batch = self.module('src.batch')
+        with patch('secrets.token_hex', return_value='a1b2c3d4'):
+            public = batch.public_results([{'rank':None,'eligible':False,'rejection_reasons':['No Python evidence']}])
+        self.assertEqual(batch.validate_public_results(public)['records'], 1)
+        public[0]['candidate_name'] = 'Private Name'
+        with self.assertRaises(AssertionError):
+            batch.validate_public_results(public)
 
 
 if __name__ == '__main__':

@@ -6,7 +6,6 @@ private/
 resumes/
 !examples/resumes/
 !examples/resumes/*.txt
-output/results.json
 output/audit.json
 output/github_cache.json
 output/manual_review.json
