@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "records": 50,
+  "evidence_spans_checked": 480,
+  "checks": [
+    "schema",
+    "category caps",
+    "arithmetic",
+    "evidence offsets",
+    "GitHub provenance",
+    "eligibility/rank consistency",
+    "sort order",
+    "duplicate exclusion"
+  ]
+}

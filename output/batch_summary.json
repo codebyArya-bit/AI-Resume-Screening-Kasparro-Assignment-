@@ -1,0 +1,27 @@
+{
+  "total_resumes": 50,
+  "successfully_parsed": 50,
+  "eligible": 40,
+  "rejected": 10,
+  "failed_unreadable": 0,
+  "duplicates": 0,
+  "shortlisted": 40,
+  "pages": 62,
+  "embedded_links": 259,
+  "github_statuses": {
+    "verified": 30,
+    "unavailable": 11,
+    "missing": 7,
+    "ambiguous": 2
+  },
+  "llm_enabled": false,
+  "ranking_accuracy": null,
+  "accuracy_note": "No trusted eligibility labels or gold ranking supplied. Parsing success is not accuracy.",
+  "score_distribution": {
+    "count": 40,
+    "minimum": 20,
+    "maximum": 86,
+    "mean": 48.52
+  },
+  "privacy": "Aggregate only. No candidate identities, URLs, evidence quotations or per-candidate ranking."
+}

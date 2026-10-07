@@ -1,0 +1,6 @@
+Synthetic Gamma
+Skills
+Python
+Projects
+Simple Chatbot
+Built a chatbot using Gemini API to answer prompts.

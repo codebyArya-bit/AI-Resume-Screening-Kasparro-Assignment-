@@ -1,0 +1,10 @@
+Synthetic Alpha
+Skills
+Python, Java, React
+Projects
+Research Assistant | Python, FastAPI
+Built a RAG assistant with LangGraph, embeddings and semantic retrieval.
+Implemented tool calling, shared graph state and checkpointed session memory.
+Designed an evaluation pipeline with document chunking.
+Built async FastAPI services with PostgreSQL and Redis caching.
+Deployed Docker containers on GCP with tests, logging and retry handling.

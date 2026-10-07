@@ -1,0 +1,5 @@
+Synthetic Beta
+Skills
+Java, JavaScript, React
+Projects
+Built a shopping cart using React and Spring Boot.
