@@ -1,5 +1,9 @@
 # Kasparro AI Resume Screening
 
+**Submitted by:** Aryabrat Mishra  
+**Roll number:** 22053670  
+**Email:** aryabrat.mishra1@gmail.com
+
 A small Python CLI that parses a folder, applies the assignment's Python + AI hard filter, scores eligible candidates out of 100, and records evidence for every awarded point. Results support human review; they are not validated hiring decisions.
 
 ## Setup and run

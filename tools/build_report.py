@@ -31,7 +31,7 @@ def build():
         t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#E4F0F1')),('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),9),('RIGHTPADDING',(0,0),(-1,-1),9),('TOPPADDING',(0,0),(-1,-1),8),('BOTTOMPADDING',(0,0),(-1,-1),5),('LINEBELOW',(0,0),(-1,0),1,colors.HexColor('#166A75')),('LINEBELOW',(0,1),(-1,-1),.3,colors.HexColor('#D9E2E8'))]))
         story.append(t)
     p('Kasparro<br/>AI Resume Screening','TitleCustom')
-    p('Assignment delivery | Python CLI | 7 October 2026','SubCustom')
+    p('Submitted by Aryabrat Mishra | Roll number 22053670<br/>aryabrat.mishra1@gmail.com | 7 October 2026','SubCustom')
     p('A reproducible screening pipeline with deterministic eligibility, evidence-backed scores, optional semantic annotation and graceful public GitHub enrichment.')
     table([['Full-batch outcome','Observed result'],['Input resumes',summary['total_resumes']],['Successfully parsed',summary['successfully_parsed']],['Eligible / rejected',f"{summary['eligible']} / {summary['rejected']}"],['Unreadable / duplicates',f"{summary['failed_unreadable']} / {summary['duplicates']}"],['PDF pages / unique embedded links',f"{summary['pages']} / {summary['embedded_links']}"],['Tests', '25 passed'],['Evidence spans validated',validation['evidence_spans_checked']]], [280,210])
     p('What these results establish','Heading2')
